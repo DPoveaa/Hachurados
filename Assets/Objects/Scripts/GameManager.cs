@@ -27,6 +27,7 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        #region Stats Bars
         #region Health
         if (healthAmount <= 0)
         {
@@ -56,9 +57,11 @@ public class GameManager : MonoBehaviour
             Rest(5);
         }
         #endregion
+        #endregion
     }
 
-    #region Health Mechanic
+    #region Stats Bars Mechanics
+    #region Health Mechanics
     public void TakeDamage(float damage)
     {
         healthAmount -= damage;
@@ -88,6 +91,18 @@ public class GameManager : MonoBehaviour
 
         staminaBar.fillAmount = staminaAmount / 100f;
     }
+    #endregion
+    #endregion
 
+    #region Main Menu
+    public void PlayGame()
+    {
+        SceneManager.LoadScene(1); //Work with "World 1" and SceneManager.GetActiveScene().buildIndex + 1
+    }
+
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
     #endregion
 }
