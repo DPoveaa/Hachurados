@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -80,6 +79,7 @@ public class Melee : MonoBehaviour
         //Make sure enemy doesn't move
         agent.SetDestination(transform.position);
 
+        //if(transform.rotation.x >=)
         transform.LookAt(player);
 
         if (!alreadyAttacked)
