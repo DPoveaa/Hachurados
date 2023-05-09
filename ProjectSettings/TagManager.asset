@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Ground
   - Skull
+  - Arrow
   layers:
   - Default
   - TransparentFX
