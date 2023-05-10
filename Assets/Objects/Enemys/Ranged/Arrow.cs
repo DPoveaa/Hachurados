@@ -4,9 +4,10 @@ using UnityEngine;
 
 public class Arrow : MonoBehaviour
 {
+    private bool groundHit = false;
+    private float disapearCountdown = 2f;
+    public Renderer arrow;
 
-    [SerializeField] private GameManager gameManager;
-    // Start is called before the first frame update
     void Start()
     {
 
@@ -15,14 +16,18 @@ public class Arrow : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        if (groundHit)
+        {
+            disapearCountdown -= Time.deltaTime;
+            if (disapearCountdown <= 0)
+            {
+                Destroy(gameObject);
+            }
+        }
     }
 
     public void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            gameManager.TakeDamage(10);
-        }
+            groundHit = true;
     }
 }

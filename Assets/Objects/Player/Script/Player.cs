@@ -64,16 +64,42 @@ public class Player : MonoBehaviour
 
     #endregion
 
+    #region Receiving Damage
+    [Header("Receiving Damage")]
+    public float knockbackForce = 80f;
+    public float upKnockBackForce = 20f;
+    public float blinkDuration = 0.5f;
+    private Vector3 damageDirection;
+    public Material material;
+    public Material material2;
+
     #endregion
+
+    #endregion
+
+    #region Void Start
     void Start()
     {
         #region GetComponent at start
+
+        #region Movement
         ct = GetComponent<CharacterController>();
         rb = GetComponent<Rigidbody>();
         #endregion
 
+        #endregion
+
         #region GetValues at start
+
+        #region Speed
         oldSpeed = speed;
+        #endregion
+
+        #region Player Color
+        material.color = Color.white;
+        material2.color = Color.white;
+        #endregion
+
         #endregion
 
         #region InvokeRepeating
@@ -87,11 +113,15 @@ public class Player : MonoBehaviour
         #endregion
 
         #endregion
-    }
 
+    }
+    #endregion
+
+    #region Void FixedUpdate
     void FixedUpdate()
     {
         #region Movement Mechanic
+
         horizontalInput = Input.GetAxis("Horizontal");
         rb.velocity = new Vector2(horizontalInput * speed, rb.velocity.y);
 
@@ -105,6 +135,7 @@ public class Player : MonoBehaviour
 
             transform.rotation = Quaternion.Slerp(transform.rotation, playerRotation, rotationSpeed * Time.deltaTime);
         }
+
         #endregion
 
         #region Skull Following
@@ -129,7 +160,9 @@ public class Player : MonoBehaviour
 
         #endregion
     }
+    #endregion
 
+    #region Void Update
     private void Update()
     {
         #region Power Mechanic
@@ -140,7 +173,6 @@ public class Player : MonoBehaviour
             {
                 speed = effectSpeed;
                 powerState = true;
-                Debug.Log("FastModeActive");
                 //attackSpeed = attackSpeed * 2;
             }
             else if (powerState)
@@ -152,12 +184,11 @@ public class Player : MonoBehaviour
         #endregion
 
         #region Rest Check
-        if (horizontalInput == 0f && !powerState)
+        if (!powerState)
         {
             if (restCountdown < 5)
             {
                 restCountdown += Time.deltaTime;
-                Debug.Log("No Movement time: " + restCountdown);
             }
             if (restCountdown >= restingDelay && !resting)
             {
@@ -172,6 +203,21 @@ public class Player : MonoBehaviour
         }
         #endregion
     }
+    #endregion
+
+    #region On Collision
+    public void OnCollisionEnter(Collision collision)
+    {
+        #region Collision With Arrow
+        if (collision.gameObject.CompareTag("Arrow"))
+        {
+            DamageTaken(10, collision);
+            Destroy(collision.gameObject);
+        }
+        #endregion
+    }
+
+    #endregion
 
     #region Functions
 
@@ -190,7 +236,6 @@ public class Player : MonoBehaviour
                 if (worldLight.intensity >= 0.01f)
                 {
                     worldLight.intensity = worldLight.intensity - lightPenality;
-                    Debug.Log(worldLight.intensity);
                 }
             }
         }
@@ -207,17 +252,14 @@ public class Player : MonoBehaviour
         {
             if (gameManager.staminaAmount >= 100 && worldLight.intensity < 1)
             {
-                Debug.Log("lightsUP");
                 worldLight.intensity = worldLight.intensity + lightPenality;
             }
             else if (gameManager.healthAmount < 100)
             {
-                Debug.Log("Healing");
                 gameManager.Heal(1);
             }
             else if (gameManager.healthAmount >= 100)
             {
-                Debug.Log("StaminaRegen");
                 gameManager.Rest(5);
             }
 
@@ -226,14 +268,43 @@ public class Player : MonoBehaviour
 
     #endregion
 
-    #endregion
-    public void OnCollisionEnter(Collision collision)
+    #region Damage Functions
+
+    #region Damage Taken
+    public void DamageTaken(int damageAmount, Collision collision)
     {
-        if (collision.gameObject.CompareTag("Arrow"))
+        gameManager.TakeDamage(damageAmount);
+        restCountdown = 0f;
+        Vector3 damageDirection = (transform.position - collision.transform.position).normalized;
+        Vector3 knockbackDirection = new Vector3(damageDirection.x, 0f, 0f);
+        rb.AddForce(transform.up * upKnockBackForce, ForceMode.Impulse);
+        rb.AddForce(knockbackDirection * knockbackForce, ForceMode.Impulse);
+
+        StartCoroutine(Blink());
+    }
+    #endregion
+
+    #region Blink
+    private IEnumerator Blink()
+    {
+        float timer = 0f;
+
+        while (timer < blinkDuration)
         {
-            gameManager.TakeDamage(10);
-            Destroy(collision.gameObject);
+            material.color = Color.red;
+            material2.color = Color.red;
+            yield return new WaitForSeconds(0.1f);
+            material.color = Color.white;
+            material2.color = Color.white;
+            yield return new WaitForSeconds(0.1f);
+            timer += 0.2f;
         }
     }
+
+    #endregion
+
+    #endregion
+
+    #endregion
 
 }
