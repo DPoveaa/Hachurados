@@ -48,9 +48,19 @@ public class Player : MonoBehaviour
     #endregion
 
     #region Power
+    [Header("Power Mechanics")]
     public bool powerState = false;
     public float staminaPenality;
     public float healthPenality;
+    public float lightPenality;
+    public Light worldLight;
+    #endregion
+
+    #region Heal && Stamina Bars
+    [Header("Healt And Stamina Mechanics")]
+    public bool resting;
+    public float restingDelay;
+    public float restCountdown;
 
     #endregion
 
@@ -66,8 +76,16 @@ public class Player : MonoBehaviour
         oldSpeed = speed;
         #endregion
 
+        #region InvokeRepeating
+
         #region Power Verification
         InvokeRepeating("PowerPenality", 0f, 0.2f);
+        #endregion
+
+        #region Rest Mode
+        InvokeRepeating("RestMode", 0.2f, 0.2f);
+        #endregion
+
         #endregion
     }
 
@@ -122,6 +140,7 @@ public class Player : MonoBehaviour
             {
                 speed = effectSpeed;
                 powerState = true;
+                Debug.Log("FastModeActive");
                 //attackSpeed = attackSpeed * 2;
             }
             else if (powerState)
@@ -130,10 +149,33 @@ public class Player : MonoBehaviour
                 powerState = false;
             }
         }
-        #endregion 
+        #endregion
+
+        #region Rest Check
+        if (horizontalInput == 0f && !powerState)
+        {
+            if (restCountdown < 5)
+            {
+                restCountdown += Time.deltaTime;
+                Debug.Log("No Movement time: " + restCountdown);
+            }
+            if (restCountdown >= restingDelay && !resting)
+            {
+                resting = true;
+                RestMode();
+            }
+        }
+        else
+        {
+            restCountdown = 0f;
+            resting = false;
+        }
+        #endregion
     }
 
-    #region Power Code functions
+    #region Functions
+
+    #region Power Code Functions
     public void PowerPenality()
     {
         if (powerState)
@@ -145,6 +187,11 @@ public class Player : MonoBehaviour
             else if (gameManager.staminaAmount <= 0)
             {
                 gameManager.TakeDamage(healthPenality);
+                if (worldLight.intensity >= 0.01f)
+                {
+                    worldLight.intensity = worldLight.intensity - lightPenality;
+                    Debug.Log(worldLight.intensity);
+                }
             }
         }
 
@@ -152,6 +199,34 @@ public class Player : MonoBehaviour
     }
     #endregion
 
+    #region Resting Function
+
+    public void RestMode()
+    {
+        if (resting && !powerState)
+        {
+            if (gameManager.staminaAmount >= 100 && worldLight.intensity < 1)
+            {
+                Debug.Log("lightsUP");
+                worldLight.intensity = worldLight.intensity + lightPenality;
+            }
+            else if (gameManager.healthAmount < 100)
+            {
+                Debug.Log("Healing");
+                gameManager.Heal(1);
+            }
+            else if (gameManager.healthAmount >= 100)
+            {
+                Debug.Log("StaminaRegen");
+                gameManager.Rest(5);
+            }
+
+        }
+    }
+
+    #endregion
+
+    #endregion
     public void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Arrow"))

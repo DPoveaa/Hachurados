@@ -18,8 +18,11 @@ public class GameManager : MonoBehaviour
     public float staminaAmount = 100f;
     #endregion
 
+    #region Scenes
+
     public int actualScene;
 
+    #endregion
     void Start()
     {
 
@@ -28,6 +31,7 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         #region Stats Bars
+
         #region Health
         if (healthAmount <= 0)
         {
@@ -57,6 +61,7 @@ public class GameManager : MonoBehaviour
             Rest(5);
         }
         #endregion
+
         #endregion
     }
 

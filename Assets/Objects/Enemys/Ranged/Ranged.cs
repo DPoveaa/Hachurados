@@ -86,6 +86,8 @@ public class Ranged : MonoBehaviour
 
     private void AttackPlayer()
     {
+        agent.SetDestination(transform.position);
+
         transform.LookAt(player);
 
         if (!alreadyAttacked)
