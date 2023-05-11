@@ -99,6 +99,23 @@ public class GameManager : MonoBehaviour
     #endregion
     #endregion
 
+    #region Collecting Pages
+
+    public void PageFragment(float fragmentNumber)
+    {
+
+    }
+
+    #endregion
+
+    #region Collecting Bones
+    public void BoneCollected(float BoneValue)
+    {
+
+    }
+
+    #endregion
+
     #region Main Menu
     public void PlayGame()
     {
