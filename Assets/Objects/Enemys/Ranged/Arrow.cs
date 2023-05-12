@@ -28,6 +28,6 @@ public class Arrow : MonoBehaviour
 
     public void OnCollisionEnter(Collision collision)
     {
-            groundHit = true;
+        groundHit = true;
     }
 }

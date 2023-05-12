@@ -1,11 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    #region Vars
+
     #region Health
     [Header("HealthBar")]
     public Image healthBar;
@@ -18,11 +21,23 @@ public class GameManager : MonoBehaviour
     public float staminaAmount = 100f;
     #endregion
 
+    #region Bones
+
+    public TMP_Text BoneAmount;
+
+    #endregion
+
     #region Scenes
 
     public int actualScene;
 
     #endregion
+
+
+
+    #endregion
+
+
     void Start()
     {
 
@@ -99,6 +114,12 @@ public class GameManager : MonoBehaviour
     #endregion
     #endregion
 
+    #region Path Update
+
+
+
+    #endregion
+
     #region Collecting Pages
 
     public void PageFragment(float fragmentNumber)
@@ -109,9 +130,9 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region Collecting Bones
-    public void BoneCollected(float BoneValue)
+    public void BoneCollected(int BoneValue)
     {
-
+        BoneAmount.text = BoneValue.ToString();
     }
 
     #endregion

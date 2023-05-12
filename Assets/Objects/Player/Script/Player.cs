@@ -1,7 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Burst.CompilerServices;
 using UnityEngine;
+using UnityEngine.UIElements;
+using static UnityEngine.EventSystems.EventTrigger;
 
 public class Player : MonoBehaviour
 {
@@ -28,28 +31,28 @@ public class Player : MonoBehaviour
     #region Speed boost
     [Header("Speed Hability")]
     private float oldSpeed;
-    public float effectSpeed;
+    private float effectSpeed = 10f;
     #endregion
 
     #region Movement
     [Header("Movement Mechanic")]
-    [SerializeField] private float rotationSpeed;
+    private float rotationSpeed = 5f;
     private float horizontalInput;
-    public float speed;
+    private float speed = 5f;
 
     #region Jump
     [Header("Jump Mechanic")]
     public float jumpForce;
-    public bool pulo;
     private float rayLength = 1.2f;
-    [SerializeField] private bool canJump;
+    private bool canJump;
+    RaycastHit hit;
     #endregion
 
     #endregion
 
     #region Power
     [Header("Power Mechanics")]
-    public bool powerState = false;
+    private bool powerState = false;
     public float staminaPenality;
     public float healthPenality;
     public float lightPenality;
@@ -58,20 +61,30 @@ public class Player : MonoBehaviour
 
     #region Heal && Stamina Bars
     [Header("Healt And Stamina Mechanics")]
-    public bool resting;
+    private bool resting;
     public float restingDelay;
-    public float restCountdown;
+    private float restCountdown;
 
     #endregion
 
     #region Receiving Damage
     [Header("Receiving Damage")]
-    public float knockbackForce = 80f;
-    public float upKnockBackForce = 20f;
     public float blinkDuration = 0.5f;
-    private Vector3 damageDirection;
+    private bool canReceive = true;
     public Material material;
     public Material material2;
+
+    #endregion
+
+    #region Attacking
+    [SerializeField, Header("Attacking Values")]
+    public float attackDelay;
+    public Transform attackPoint;
+    private float attackCountdown = 0;
+    private Collider attackCheck;
+    public LayerMask enemyLayers;
+    private Melee enemy;
+    private BoxDestroy box;
 
     #endregion
 
@@ -85,6 +98,12 @@ public class Player : MonoBehaviour
         #region Movement
         ct = GetComponent<CharacterController>();
         rb = GetComponent<Rigidbody>();
+        #endregion
+
+        #region Attack
+
+        attackCheck = GetComponent<BoxCollider>();
+
         #endregion
 
         #endregion
@@ -143,9 +162,12 @@ public class Player : MonoBehaviour
         #endregion
 
         #region Jump Mechanic
-        if (Physics.Raycast(transform.position, Vector3.down, rayLength))
+        if (Physics.Raycast(transform.position, Vector3.down, out hit, rayLength))
         {
-            canJump = true;
+            if (!hit.collider.CompareTag("Trap"))
+            {
+                canJump = true;
+            }
         }
         else
         {
@@ -159,6 +181,7 @@ public class Player : MonoBehaviour
         #endregion
 
         #endregion
+
     }
     #endregion
 
@@ -188,7 +211,9 @@ public class Player : MonoBehaviour
         {
             if (restCountdown < 5)
             {
+                Debug.Log(restCountdown);
                 restCountdown += Time.deltaTime;
+                resting = false;
             }
             if (restCountdown >= restingDelay && !resting)
             {
@@ -202,6 +227,21 @@ public class Player : MonoBehaviour
             resting = false;
         }
         #endregion
+
+        #region Attack Mechanic
+        if (attackCountdown > 0)
+        {
+            attackCountdown -= Time.deltaTime;
+        }
+        else if (Input.GetMouseButtonDown(0))
+        {
+            Attack();
+            attackCountdown = attackDelay;
+        }
+
+
+
+        #endregion
     }
     #endregion
 
@@ -211,10 +251,24 @@ public class Player : MonoBehaviour
         #region Collision With Arrow
         if (collision.gameObject.CompareTag("Arrow"))
         {
-            DamageTaken(10, collision);
+            DamageTaken(10, collision, null, 80, 10);
             Destroy(collision.gameObject);
         }
+
+        if (collision.gameObject.CompareTag("Trap"))
+        {
+            DamageTaken(50, collision, null, 20, 10);
+        }
         #endregion
+    }
+
+    #endregion
+
+    #region On Trigger
+
+    public void OnTriggerEnter(Collider other)
+    {
+
     }
 
     #endregion
@@ -244,7 +298,7 @@ public class Player : MonoBehaviour
     }
     #endregion
 
-    #region Resting Function
+    #region Resting Functions
 
     public void RestMode()
     {
@@ -271,16 +325,31 @@ public class Player : MonoBehaviour
     #region Damage Functions
 
     #region Damage Taken
-    public void DamageTaken(int damageAmount, Collision collision)
+    public void DamageTaken(int damageAmount, Collision collision, Collider trigger, float knockbackForce, float upKnockBackForce)
     {
-        gameManager.TakeDamage(damageAmount);
-        restCountdown = 0f;
-        Vector3 damageDirection = (transform.position - collision.transform.position).normalized;
-        Vector3 knockbackDirection = new Vector3(damageDirection.x, 0f, 0f);
-        rb.AddForce(transform.up * upKnockBackForce, ForceMode.Impulse);
-        rb.AddForce(knockbackDirection * knockbackForce, ForceMode.Impulse);
+        if (canReceive)
+        {
+            canReceive = false;
+            gameManager.TakeDamage(damageAmount);
+            restCountdown = 0f;
+            Debug.Log(restCountdown);
+            if (collision != null)
+            {
+                Vector3 damageDirection = (transform.position - collision.transform.position).normalized;
+                Vector3 knockbackDirection = new Vector3(damageDirection.x, 0f, damageDirection.z) * 2;
+                rb.AddForce(transform.up * upKnockBackForce, ForceMode.Impulse);
+                rb.AddForce(knockbackDirection * knockbackForce, ForceMode.Impulse);
+            }
+            else if (trigger != null)
+            {
+                Vector3 damageDirection = (transform.position - trigger.transform.position).normalized;
+                Vector3 knockbackDirection = new Vector3(damageDirection.x, 0f, damageDirection.z) * 2;
+                rb.AddForce(transform.up * upKnockBackForce, ForceMode.Impulse);
+                rb.AddForce(knockbackDirection * knockbackForce, ForceMode.Impulse);
+            }
 
-        StartCoroutine(Blink());
+            StartCoroutine(Blink());
+        }
     }
     #endregion
 
@@ -299,12 +368,42 @@ public class Player : MonoBehaviour
             yield return new WaitForSeconds(0.1f);
             timer += 0.2f;
         }
+        canReceive = true;
     }
 
     #endregion
 
     #endregion
 
+    #region Attack Functions
+
+    public void Attack()
+    {
+        Collider[] hitCollider = Physics.OverlapBox(attackPoint.position, new Vector3(1.5f, 0.8f, 2f), new Quaternion(0, 0, 0, 0), enemyLayers);
+
+        foreach (Collider objects in hitCollider)
+        {
+            if (objects.CompareTag("Enemy"))
+            {
+                Melee enemy = objects.GetComponent<Melee>();
+                enemy.TakeDamage(1);
+            }
+
+            if (objects.CompareTag("Box"))
+            {
+                BoxDestroy box = objects.GetComponent<BoxDestroy>();
+                box.Brake();
+            }
+        }
+    }
+
     #endregion
 
+    #endregion
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(attackPoint.position, new Vector3(1.5f, 0.8f, 2f));
+    }
 }

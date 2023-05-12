@@ -7,6 +7,9 @@ TagManager:
   - Ground
   - Skull
   - Arrow
+  - Trap
+  - Box
+  - Enemy
   layers:
   - Default
   - TransparentFX
@@ -18,8 +21,8 @@ TagManager:
   - Skull
   - Enemy
   - Collectables
-  - 
-  - 
+  - Trap
+  - Box
   - 
   - 
   - 

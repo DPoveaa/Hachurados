@@ -5,7 +5,7 @@ using UnityEngine;
 public class Bones : MonoBehaviour
 {
     private GameManager gameManager;
-    public float BoneValue;
+    public int BoneValue;
 
     private void Start()
     {
