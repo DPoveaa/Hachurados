@@ -7,10 +7,11 @@ public class Arrow : MonoBehaviour
     private bool groundHit = false;
     private float disapearCountdown = 2f;
     public Renderer arrow;
+    private Collider collider;
 
     void Start()
     {
-
+        collider = GetComponent<CapsuleCollider>();
     }
 
     // Update is called once per frame
@@ -18,6 +19,7 @@ public class Arrow : MonoBehaviour
     {
         if (groundHit)
         {
+            collider.enabled = false;
             disapearCountdown -= Time.deltaTime;
             if (disapearCountdown <= 0)
             {

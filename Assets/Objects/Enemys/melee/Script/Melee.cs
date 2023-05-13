@@ -20,6 +20,8 @@ public class Melee : MonoBehaviour
     private Collider attackCheck;
     #endregion
 
+    public Animator animations;
+
     //Patroling
     public Vector3 walkPoint;
     public bool walkPointSet;
@@ -48,20 +50,40 @@ public class Melee : MonoBehaviour
 
     private void Update()
     {
-        //Check for sight and attack range
-        playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
-        playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
-
-        if (!playerInSightRange && !playerInAttackRange) Patroling();
-        if (playerInSightRange && !playerInAttackRange) ChasePlayer();
-        if (playerInAttackRange && playerInSightRange) AttackPlayer();
-
-        if (attackCountdown > 0)
+        if (!GameManager.isPaused)
         {
-            attackCountdown -= Time.deltaTime;
-        } else if (attackCountdown <= 0)
-        {
-            alreadyAttacked = false;
+            //Check for sight and attack range
+            playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
+            playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
+
+            if (!playerInSightRange && !playerInAttackRange) Patroling();
+            if (playerInSightRange && !playerInAttackRange) ChasePlayer();
+            if (playerInAttackRange && playerInSightRange) AttackPlayer();
+
+            if (attackCountdown > 0)
+            {
+                attackCountdown -= Time.deltaTime;
+            }
+            else if (attackCountdown <= 0)
+            {
+                alreadyAttacked = false;
+            }
+
+            if (!playerInAttackRange && !playerInSightRange)
+            {
+                animations.SetBool("Walking", false);
+                animations.SetBool("InRange", false);
+            }
+            else if (!playerInAttackRange)
+            {
+                animations.SetBool("InRange", true);
+                animations.SetBool("Walking", true);
+            }
+            else
+            {
+                animations.SetBool("Walking", false);
+                animations.SetBool("InRange", false);
+            }
         }
     }
     private void Patroling()
@@ -106,7 +128,7 @@ public class Melee : MonoBehaviour
         {
             if (other.gameObject.CompareTag("Player"))
             {
-                playerScript.DamageTaken(10, null, other, 40, 5);
+                playerScript.DamageTaken(10, null, other, 60, 0);
             }
         }
 
@@ -115,7 +137,6 @@ public class Melee : MonoBehaviour
 
     private void AttackPlayer()
     {
-        //Make sure enemy doesn't move
         agent.SetDestination(transform.position);
 
         Vector3 direction = (player.position - transform.position).normalized;
@@ -130,10 +151,13 @@ public class Melee : MonoBehaviour
 
     private IEnumerator Attack()
     {
+        animations.SetBool("Slash", true);
+        yield return new WaitForSeconds(0.3f);
         attackCheck.enabled = true;
         yield return new WaitForSeconds(0.1f);
         attackCheck.enabled = false;
         alreadyAttacked = true;
+        animations.SetBool("Slash", false);
         attackCountdown = attackDelay;
     }
 

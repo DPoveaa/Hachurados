@@ -7,15 +7,13 @@ using UnityEngine.AI;
 public class Ranged : MonoBehaviour
 {
 
-    #region Projectile
-    public float arrowXOffset = 1;
-    public float arrowYOffset = 0.6f;
-    public float arrowZOffset;
+    #region Projectile Audio
+    public AudioSource shootingSFX;
     #endregion
 
     #region Damage
 
-    private float health = 3;
+    private float health = 2;
 
     #endregion
 
@@ -27,6 +25,8 @@ public class Ranged : MonoBehaviour
 
     public LayerMask whatIsGround, whatIsPlayer;
 
+    public Animator animations;
+
     //Patroling
     public Vector3 walkPoint;
     bool walkPointSet;
@@ -36,6 +36,9 @@ public class Ranged : MonoBehaviour
     public float timeBetweenAttacks;
     bool alreadyAttacked;
     public GameObject projectile;
+    public float rotationSpeed = 5f;
+    public float attackDelay;
+    public float attackCountdown;
 
     //States
     public float sightRange, attackRange;
@@ -49,15 +52,42 @@ public class Ranged : MonoBehaviour
 
     private void Update()
     {
-        //Check for sight and attack range
-        playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
-        playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
+        if (!GameManager.isPaused)
+        {
+            //Check for sight and attack range
+            playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
+            playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
 
-        if (!playerInSightRange && !playerInAttackRange) Patroling();
-        if (playerInSightRange && !playerInAttackRange) ChasePlayer();
-        if (playerInAttackRange && playerInSightRange) AttackPlayer();
+            if (!playerInSightRange && !playerInAttackRange) Patroling();
+            if (playerInSightRange && !playerInAttackRange) ChasePlayer();
+            if (playerInAttackRange && playerInSightRange) AttackPlayer();
+
+            if (attackCountdown > 0)
+            {
+                attackCountdown -= Time.deltaTime;
+            }
+            else if (attackCountdown <= 0)
+            {
+                alreadyAttacked = false;
+            }
+
+            if (!playerInAttackRange && !playerInSightRange)
+            {
+                animations.SetBool("Walking", false);
+                animations.SetBool("InRange", false);
+            }
+            else if (!playerInAttackRange)
+            {
+                animations.SetBool("InRange", true);
+                animations.SetBool("Walking", true);
+            }
+            else
+            {
+                animations.SetBool("Walking", false);
+                animations.SetBool("InRange", false);
+            }
+        }
     }
-
     private void Patroling()
     {
         if (!walkPointSet) SearchWalkPoint();
@@ -92,26 +122,31 @@ public class Ranged : MonoBehaviour
     {
         agent.SetDestination(transform.position);
 
+        arrowSpawn.LookAt(player);
+
         Vector3 direction = (player.position - transform.position).normalized;
         Quaternion lookRotation = Quaternion.LookRotation(direction);
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 3f);
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
 
         if (!alreadyAttacked)
         {
-            ///Attack code here
-            Quaternion rotation = Quaternion.Euler(0, 0, - 90f);
-            Rigidbody rb = Instantiate(projectile, arrowSpawn.position, rotation).GetComponent<Rigidbody>();
-            rb.AddForce(transform.forward * 32f, ForceMode.Impulse);
-            rb.AddForce(transform.up * 8f, ForceMode.Impulse);
-
-            ///End of attack code
-            alreadyAttacked = true;
-            Invoke(nameof(ResetAttack), timeBetweenAttacks);
+            StartCoroutine(Attack());
         }
     }
-    private void ResetAttack()
+
+    private IEnumerator Attack()
     {
-        alreadyAttacked = false;
+        animations.SetBool("Shoot", true);
+        alreadyAttacked = true;
+        attackCountdown = attackDelay;
+        yield return new WaitForSeconds(0.6f);
+        Rigidbody rb = Instantiate(projectile, arrowSpawn.position, Quaternion.identity).GetComponent<Rigidbody>();
+        rb.transform.rotation = Quaternion.LookRotation(arrowSpawn.forward, arrowSpawn.up) * Quaternion.Euler(-90f, 0f, 0f);
+        rb.AddForce(arrowSpawn.forward * 32f, ForceMode.Impulse);
+        rb.AddForce(arrowSpawn.up * 8f, ForceMode.Impulse);
+        shootingSFX.Play();
+        yield return new WaitForSeconds(0.1f);
+        animations.SetBool("Shoot", false);
     }
 
     public void TakeDamage(int damage)

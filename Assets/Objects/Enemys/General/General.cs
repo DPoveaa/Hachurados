@@ -56,39 +56,41 @@ public class General : MonoBehaviour
 
     private void Update()
     {
-        //Check for sight and attack range
-        playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
-        playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
+        if (!GameManager.isPaused)
+        {
+            //Check for sight and attack range
+            playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
+            playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
 
-        if (!playerInSightRange && !playerInAttackRange) Patroling();
-        if (playerInSightRange && !playerInAttackRange) ChasePlayer();
-        if (playerInAttackRange && playerInSightRange) AttackPlayer();
+            if (!playerInSightRange && !playerInAttackRange) Patroling();
+            if (playerInSightRange && !playerInAttackRange) ChasePlayer();
+            if (playerInAttackRange && playerInSightRange) AttackPlayer();
 
-        if (attackCountdown > 0)
-        {
-            attackCountdown -= Time.deltaTime;
-        }
-        else if (attackCountdown <= 0)
-        {
-            alreadyAttacked = false;
-        }
+            if (attackCountdown > 0)
+            {
+                attackCountdown -= Time.deltaTime;
+            }
+            else if (attackCountdown <= 0)
+            {
+                alreadyAttacked = false;
+            }
 
-        if (!playerInAttackRange && !playerInSightRange)
-        {
-            animations.SetBool("Walking", false);
-            animations.SetBool("InRange", false);
+            if (!playerInAttackRange && !playerInSightRange)
+            {
+                animations.SetBool("Walking", false);
+                animations.SetBool("InRange", false);
+            }
+            else if (!playerInAttackRange)
+            {
+                animations.SetBool("InRange", true);
+                animations.SetBool("Walking", true);
+            }
+            else
+            {
+                animations.SetBool("Walking", false);
+                animations.SetBool("InRange", false);
+            }
         }
-        else if (!playerInAttackRange)
-        {
-            animations.SetBool("InRange", true);
-            animations.SetBool("Walking", true);
-        }
-        else
-        {
-            animations.SetBool("Walking", false);
-            animations.SetBool("InRange", false);
-        }
-
     }
     private void Patroling()
     {
@@ -148,7 +150,6 @@ public class General : MonoBehaviour
         Quaternion lookRotation = Quaternion.LookRotation(direction);
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
 
-        gonnaPunch = true;
         StartCoroutine(Attack());
     }
 

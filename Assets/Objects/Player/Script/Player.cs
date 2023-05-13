@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Unity.Burst.CompilerServices;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static UnityEngine.EventSystems.EventTrigger;
@@ -9,6 +11,18 @@ using static UnityEngine.EventSystems.EventTrigger;
 public class Player : MonoBehaviour
 {
     #region vars
+
+    #region Sounds
+
+    public AudioSource hurtedSFX;
+
+    #endregion
+
+    #region
+
+    public Animator animations;
+
+    #endregion
 
     #region Another Scripts
 
@@ -80,12 +94,13 @@ public class Player : MonoBehaviour
     [SerializeField, Header("Attacking Values")]
     public float attackDelay;
     public Transform attackPoint;
-    private float attackCountdown = 0;
+    public float attackCountdown = 0;
     private Collider attackCheck;
     public LayerMask enemyLayers;
     private Melee melee;
     private Ranged ranged;
     private BoxDestroy box;
+    public bool attacked;
 
     #endregion
 
@@ -146,108 +161,123 @@ public class Player : MonoBehaviour
     #region Void FixedUpdate
     void FixedUpdate()
     {
-        #region Movement Mechanic
-
-        horizontalInput = Input.GetAxis("Horizontal");
-        rb.velocity = new Vector2(horizontalInput * speed, rb.velocity.y);
-
-        #region Rotation
-        Vector3 movementInput = new Vector3(0, 0, horizontalInput);
-        Vector3 movementDirection = movementInput.normalized;
-
-        if (movementDirection != Vector3.zero)
+        if (!GameManager.isPaused)
         {
-            Quaternion playerRotation = Quaternion.LookRotation(movementDirection, Vector3.up);
+            #region Movement Mechanic
 
-            transform.rotation = Quaternion.Slerp(transform.rotation, playerRotation, rotationSpeed * Time.deltaTime);
-        }
+            horizontalInput = Input.GetAxis("Horizontal");
+            rb.velocity = new Vector2(horizontalInput * speed, rb.velocity.y);
 
-        #endregion
+            #region Rotation
+            Vector3 movementInput = new Vector3(0, 0, horizontalInput);
+            Vector3 movementDirection = movementInput.normalized;
 
-        #region Skull Following
-        skullFollow.SetBool("Follow", horizontalInput != 0);
-        #endregion
-
-        #region Jump Mechanic
-        if (Physics.Raycast(transform.position, Vector3.down, out hit, rayLength))
-        {
-            if (!hit.collider.CompareTag("Trap"))
+            if (movementDirection != Vector3.zero)
             {
-                canJump = true;
+                Quaternion playerRotation = Quaternion.LookRotation(movementDirection, Vector3.up);
+                animations.SetBool("Walking", true);
+                transform.rotation = Quaternion.Slerp(transform.rotation, playerRotation, rotationSpeed * Time.deltaTime);
+            } else
+            {
+                animations.SetBool("Walking", false);
             }
-        }
-        else
-        {
-            canJump = false;
-        }
 
-        if (Input.GetButton("Jump") && canJump == true)
-        {
-            rb.AddForce(Vector3.up * jumpForce * 10);
+            #endregion
+
+            #region Skull Following
+            skullFollow.SetBool("Follow", horizontalInput != 0);
+            #endregion
+
+            #region Jump Mechanic
+            if (Physics.Raycast(transform.position, Vector3.down, out hit, rayLength))
+            {
+                if (!hit.collider.CompareTag("Trap"))
+                {
+                    canJump = true;
+                    animations.SetBool("Jump", false);
+                }
+            }
+            else
+            {
+                canJump = false;
+                animations.SetBool("Jump", false);
+            }
+
+            if (Input.GetButton("Jump") && canJump == true)
+            {
+                animations.SetBool("Jump",true);
+                rb.AddForce(Vector3.up * jumpForce * 10);
+            }
+            #endregion
+
+            #endregion
         }
-        #endregion
-
-        #endregion
-
     }
     #endregion
 
     #region Void Update
     private void Update()
     {
-        #region Power Mechanic
-
-        if (Input.GetMouseButtonDown(1))
+        if (!GameManager.isPaused)
         {
+            #region Power Mechanic
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                if (!powerState)
+                {
+                    speed = effectSpeed;
+                    powerState = true;
+                    //attackSpeed = attackSpeed * 2;
+                }
+                else if (powerState)
+                {
+                    speed = oldSpeed;
+                    powerState = false;
+                }
+            }
+            #endregion
+
+            #region Rest Check
             if (!powerState)
             {
-                speed = effectSpeed;
-                powerState = true;
-                //attackSpeed = attackSpeed * 2;
+                if (restCountdown < 5)
+                {
+                    restCountdown += Time.deltaTime;
+                    resting = false;
+                }
+                if (restCountdown >= restingDelay && !resting)
+                {
+                    resting = true;
+                    RestMode();
+                }
             }
-            else if (powerState)
+            else
             {
-                speed = oldSpeed;
-                powerState = false;
-            }
-        }
-        #endregion
-
-        #region Rest Check
-        if (!powerState)
-        {
-            if (restCountdown < 5)
-            {
-                restCountdown += Time.deltaTime;
+                restCountdown = 0f;
                 resting = false;
             }
-            if (restCountdown >= restingDelay && !resting)
+            #endregion
+
+            #region Attack Mechanic
+            if (attackCountdown > 0)
             {
-                resting = true;
-                RestMode();
+                attackCountdown -= Time.deltaTime;
             }
-        }
-        else
-        {
-            restCountdown = 0f;
-            resting = false;
-        }
-        #endregion
+            else if (Input.GetMouseButtonDown(0) && attackCountdown <= 0)
+            {
+                UnityEngine.Debug.Log("Attacked");
+                attackCountdown = attackDelay;
+                StartCoroutine(Attacking());
+            }
 
-        #region Attack Mechanic
-        if (attackCountdown > 0)
-        {
-            attackCountdown -= Time.deltaTime;
+            if (attackCountdown <= 0)
+            {
+                attacked = false;
+            }
+            #endregion
+
         }
-        else if (Input.GetMouseButtonDown(0) && attackCountdown <= 0)
-        {
-            Attack();
-            attackCountdown = attackDelay;
-        }
-
-
-
-        #endregion
     }
     #endregion
 
@@ -263,7 +293,7 @@ public class Player : MonoBehaviour
 
         if (collision.gameObject.CompareTag("Trap"))
         {
-            DamageTaken(50, collision, null, 20, 10);
+            DamageTaken(50, collision, null, 20, 0);
         }
         #endregion
     }
@@ -291,7 +321,6 @@ public class Player : MonoBehaviour
                 gameManager.TakeStamina(staminaPenality);
                 if (worldLight.intensity >= 0.01f)
                 {
-                    Debug.Log("Light");
                     worldLight.intensity = worldLight.intensity - lightPenality;
                 }
             }
@@ -342,7 +371,9 @@ public class Player : MonoBehaviour
         if (canReceive)
         {
             canReceive = false;
+            animations.SetBool("Hitted", true);
             gameManager.TakeDamage(damageAmount);
+            hurtedSFX.Play();
             restCountdown = 0f;
             if (collision != null)
             {
@@ -364,6 +395,20 @@ public class Player : MonoBehaviour
     }
     #endregion
 
+    #region Attack Delay
+
+    private IEnumerator Attacking()
+    {
+        UnityEngine.Debug.Log("Coroutine");
+        animations.SetBool("Attack", true);;
+        yield return new WaitForSeconds(0.5f);
+        Attack();
+        yield return new WaitForSeconds(0.2f);
+        animations.SetBool("Attack", false);
+    }
+
+    #endregion
+
     #region Blink
     private IEnumerator Blink()
     {
@@ -379,6 +424,7 @@ public class Player : MonoBehaviour
             yield return new WaitForSeconds(0.1f);
             timer += 0.2f;
         }
+        animations.SetBool("Hitted", false);
         canReceive = true;
     }
 
@@ -390,14 +436,14 @@ public class Player : MonoBehaviour
 
     public void Attack()
     {
-        if (attackCountdown <= 0)
+        if (!attacked)
         {
-            Debug.Log("Fire");
-            Collider[] hitCollider = Physics.OverlapBox(attackPoint.position, new Vector3(1.5f, 0.8f, 2f), new Quaternion(0, 0, 0, 0), enemyLayers);
+            attacked = true;
+            UnityEngine.Debug.Log("Coroutine");
+            Collider[] hitCollider = Physics.OverlapBox(attackPoint.position, new Vector3(3f, 2f, 2f), new Quaternion(0, 0, 0, 0), enemyLayers);
 
             foreach (Collider objects in hitCollider)
             {
-                Debug.Log("hit");
                 if (objects.GetComponent<Melee>() != null)
                 {
                     Melee melee = objects.GetComponent<Melee>();
@@ -407,7 +453,7 @@ public class Player : MonoBehaviour
                 if (objects.GetComponent<Ranged>() != null)
                 {
                     Ranged ranged = objects.GetComponent<Ranged>();
-                    ranged.TakeDamage(2);
+                    ranged.TakeDamage(1);
                 }
 
                 if (objects.GetComponent<General>() != null)
@@ -432,6 +478,6 @@ public class Player : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireCube(attackPoint.position, new Vector3(1.5f, 0.8f, 2f));
+        Gizmos.DrawWireCube(attackPoint.position, new Vector3(3f, 2f, 2f));
     }
 }

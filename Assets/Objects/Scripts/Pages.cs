@@ -5,7 +5,7 @@ using UnityEngine;
 public class Pages : MonoBehaviour
 {
     private GameManager gameManager;
-    public float fragmentNumber;
+    public int fragmentNumber;
 
     private void Start()
     {
