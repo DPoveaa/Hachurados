@@ -43,7 +43,7 @@ public class Player : MonoBehaviour
     #region Jump
     [Header("Jump Mechanic")]
     public float jumpForce;
-    private float rayLength = 1.2f;
+    private float rayLength = 1.3f;
     private bool canJump;
     RaycastHit hit;
     #endregion
@@ -83,7 +83,8 @@ public class Player : MonoBehaviour
     private float attackCountdown = 0;
     private Collider attackCheck;
     public LayerMask enemyLayers;
-    private Melee enemy;
+    private Melee melee;
+    private Ranged ranged;
     private BoxDestroy box;
 
     #endregion
@@ -117,6 +118,12 @@ public class Player : MonoBehaviour
         #region Player Color
         material.color = Color.white;
         material2.color = Color.white;
+        #endregion
+
+        #region
+
+        worldLight.intensity = 1;
+
         #endregion
 
         #endregion
@@ -211,7 +218,6 @@ public class Player : MonoBehaviour
         {
             if (restCountdown < 5)
             {
-                Debug.Log(restCountdown);
                 restCountdown += Time.deltaTime;
                 resting = false;
             }
@@ -233,7 +239,7 @@ public class Player : MonoBehaviour
         {
             attackCountdown -= Time.deltaTime;
         }
-        else if (Input.GetMouseButtonDown(0))
+        else if (Input.GetMouseButtonDown(0) && attackCountdown <= 0)
         {
             Attack();
             attackCountdown = attackDelay;
@@ -280,17 +286,22 @@ public class Player : MonoBehaviour
     {
         if (powerState)
         {
-            if (gameManager.staminaAmount > 0)
+            if (gameManager.staminaAmount <= 50)
+            {
+                gameManager.TakeStamina(staminaPenality);
+                if (worldLight.intensity >= 0.01f)
+                {
+                    Debug.Log("Light");
+                    worldLight.intensity = worldLight.intensity - lightPenality;
+                }
+            }
+            if (gameManager.staminaAmount > 50)
             {
                 gameManager.TakeStamina(staminaPenality);
             }
-            else if (gameManager.staminaAmount <= 0)
+            if (gameManager.staminaAmount <= 0)
             {
                 gameManager.TakeDamage(healthPenality);
-                if (worldLight.intensity >= 0.01f)
-                {
-                    worldLight.intensity = worldLight.intensity - lightPenality;
-                }
             }
         }
 
@@ -304,9 +315,10 @@ public class Player : MonoBehaviour
     {
         if (resting && !powerState)
         {
-            if (gameManager.staminaAmount >= 100 && worldLight.intensity < 1)
+            if (gameManager.staminaAmount >= 80 && worldLight.intensity < 1)
             {
                 worldLight.intensity = worldLight.intensity + lightPenality;
+                gameManager.Rest(5);
             }
             else if (gameManager.healthAmount < 100)
             {
@@ -332,7 +344,6 @@ public class Player : MonoBehaviour
             canReceive = false;
             gameManager.TakeDamage(damageAmount);
             restCountdown = 0f;
-            Debug.Log(restCountdown);
             if (collision != null)
             {
                 Vector3 damageDirection = (transform.position - collision.transform.position).normalized;
@@ -379,20 +390,37 @@ public class Player : MonoBehaviour
 
     public void Attack()
     {
-        Collider[] hitCollider = Physics.OverlapBox(attackPoint.position, new Vector3(1.5f, 0.8f, 2f), new Quaternion(0, 0, 0, 0), enemyLayers);
-
-        foreach (Collider objects in hitCollider)
+        if (attackCountdown <= 0)
         {
-            if (objects.CompareTag("Enemy"))
-            {
-                Melee enemy = objects.GetComponent<Melee>();
-                enemy.TakeDamage(1);
-            }
+            Debug.Log("Fire");
+            Collider[] hitCollider = Physics.OverlapBox(attackPoint.position, new Vector3(1.5f, 0.8f, 2f), new Quaternion(0, 0, 0, 0), enemyLayers);
 
-            if (objects.CompareTag("Box"))
+            foreach (Collider objects in hitCollider)
             {
-                BoxDestroy box = objects.GetComponent<BoxDestroy>();
-                box.Brake();
+                Debug.Log("hit");
+                if (objects.GetComponent<Melee>() != null)
+                {
+                    Melee melee = objects.GetComponent<Melee>();
+                    melee.TakeDamage(1);
+                }
+
+                if (objects.GetComponent<Ranged>() != null)
+                {
+                    Ranged ranged = objects.GetComponent<Ranged>();
+                    ranged.TakeDamage(2);
+                }
+
+                if (objects.GetComponent<General>() != null)
+                {
+                    General general = objects.GetComponent<General>();
+                    general.TakeDamage(1);
+                }
+
+                if (objects.GetComponent<BoxDestroy>() != null)
+                {
+                    BoxDestroy box = objects.GetComponent<BoxDestroy>();
+                    box.Brake();
+                }
             }
         }
     }

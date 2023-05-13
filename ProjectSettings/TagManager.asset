@@ -10,6 +10,7 @@ TagManager:
   - Trap
   - Box
   - Enemy
+  - Hole
   layers:
   - Default
   - TransparentFX
@@ -23,7 +24,7 @@ TagManager:
   - Collectables
   - Trap
   - Box
-  - 
+  - Hole
   - 
   - 
   - 

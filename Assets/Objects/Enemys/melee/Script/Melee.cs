@@ -13,12 +13,7 @@ public class Melee : MonoBehaviour
     public LayerMask whatIsGround, whatIsPlayer;
 
     #region Damage
-
     private float health = 3;
-    public float blinkDuration = 0.2f;
-    public Material material;
-    private Material oldColor;
-
     #endregion
 
     #region Attack
@@ -41,7 +36,7 @@ public class Melee : MonoBehaviour
 
     private void Start()
     {
-        oldColor.color = material.color;
+
     }
 
     private void Awake()
@@ -148,28 +143,7 @@ public class Melee : MonoBehaviour
         if (health <= 0)
         {
             Destroy(gameObject);
-        } else
-        {
-            StartCoroutine(Blink());
-        }
-    }
-
-    private IEnumerator Blink()
-    {
-        float timer = 0f;
-
-        while (timer < blinkDuration)
-        {
-            material.color = Color.red;
-            yield return new WaitForSeconds(0.1f);
-            material.color = oldColor.color;
-            yield return new WaitForSeconds(0.1f);
-            timer += 0.2f;
-        }
-    }
-    private void DestroyEnemy()
-    {
-        Destroy(gameObject);
+        } 
     }
 
     private void OnDrawGizmosSelected()

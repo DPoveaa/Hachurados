@@ -50,8 +50,8 @@ public class GameManager : MonoBehaviour
         #region Health
         if (healthAmount <= 0)
         {
-            actualScene = SceneManager.GetActiveScene().buildIndex;
-            SceneManager.LoadScene(actualScene);
+            //actualScene = SceneManager.GetActiveScene().buildIndex;
+            //SceneManager.LoadScene(actualScene);
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha1))

@@ -13,6 +13,12 @@ public class Ranged : MonoBehaviour
     public float arrowZOffset;
     #endregion
 
+    #region Damage
+
+    private float health = 3;
+
+    #endregion
+
     public NavMeshAgent agent;
 
     public Transform player;
@@ -20,8 +26,6 @@ public class Ranged : MonoBehaviour
     private Transform arrowRotation;
 
     public LayerMask whatIsGround, whatIsPlayer;
-
-    public float health;
 
     //Patroling
     public Vector3 walkPoint;
@@ -113,12 +117,10 @@ public class Ranged : MonoBehaviour
     public void TakeDamage(int damage)
     {
         health -= damage;
-
-        if (health <= 0) Invoke(nameof(DestroyEnemy), 0.5f);
-    }
-    private void DestroyEnemy()
-    {
-        Destroy(gameObject);
+        if (health <= 0)
+        {
+            Destroy(gameObject);
+        }
     }
 
     private void OnDrawGizmosSelected()
