@@ -27,6 +27,8 @@ public class General : MonoBehaviour
     private float punchDisableDelay;
     #endregion
 
+    public Light worldLight;
+
     //Patroling
     public Vector3 walkPoint;
     public bool walkPointSet;
@@ -90,6 +92,12 @@ public class General : MonoBehaviour
                 animations.SetBool("Walking", false);
                 animations.SetBool("InRange", false);
             }
+
+            if (playerInSightRange || playerInAttackRange)
+            {
+                GameManager.actualMusic = 2;
+            }
+
         }
     }
     private void Patroling()
@@ -176,6 +184,7 @@ public class General : MonoBehaviour
         health -= damage;
         if (health <= 0)
         {
+            GameManager.bossDead = true;
             Destroy(gameObject);
         }
     }

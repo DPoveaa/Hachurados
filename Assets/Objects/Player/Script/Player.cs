@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.Burst.CompilerServices;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static UnityEngine.EventSystems.EventTrigger;
@@ -295,6 +294,11 @@ public class Player : MonoBehaviour
         {
             DamageTaken(50, collision, null, 20, 0);
         }
+
+        if (collision.gameObject.CompareTag("Limit"))
+        {
+            DamageTaken(110, collision, null, 0, 0);
+        }
         #endregion
     }
 
@@ -344,7 +348,7 @@ public class Player : MonoBehaviour
     {
         if (resting && !powerState)
         {
-            if (gameManager.staminaAmount >= 80 && worldLight.intensity < 1)
+            if (gameManager.staminaAmount >= 80 && worldLight.intensity < 1 && !GameManager.bossDead)
             {
                 worldLight.intensity = worldLight.intensity + lightPenality;
                 gameManager.Rest(5);

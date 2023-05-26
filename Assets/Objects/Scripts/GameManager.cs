@@ -61,25 +61,214 @@ public class GameManager : MonoBehaviour
     public GameObject page9;
 
     private bool reading;
+    public AudioSource pageSFX;
+    private float pageTimer = 10;
     #endregion
+
+    #region Soundtrack
+
+    public AudioSource music1;
+    public AudioSource music2;
+
+    public static int actualMusic = 1;
+
+    #endregion
+
+    #region
+
+    public GameObject dialogue1;
+    public GameObject dialogue2;
+    public GameObject dialogue3;
+    public GameObject dialogue4;
+    public GameObject dialogue5;
+    public GameObject dialogue6;
+    public GameObject dialogue7;
+    public GameObject dialogue8;
+
+    public float dialogueTimer;
+    public int actualDialogue;
+
+    private bool finishedDialogue;
+    #endregion
+
+    public Light worldLight;
+    public Light light2;
+    public Light light3;
+    public Light light4;
+    public Light light5;
+    public static bool bossDead;
+
+    public GameObject endText;
 
     #endregion
 
 
     void Start()
     {
+        bossDead = false;
+        DontDestroyOnLoad(gameObject);
         pauseMenu.SetActive(false);
+
+        dialogueTimer = 2;
     }
 
     void Update()
     {
+
+
+        Debug.Log(actualDialogue);
+        Debug.Log("timer: " + dialogueTimer);
+        if (bossDead)
+        {
+            worldLight.intensity = worldLight.intensity - 0.10f;
+            light2.intensity = light2.intensity - 0.01f;
+            light3.intensity = light3.intensity - 0.01f;
+            light4.intensity = light4.intensity - 0.01f;
+            light5.intensity = light5.intensity - 0.01f;
+        }
+        if (worldLight.intensity <= 0 && light2.intensity <= 0 || light3.intensity <= 0)
+        {
+            endText.SetActive(true);
+        }
+
+        if (actualDialogue < 9 && dialogueTimer > 0)
+        {
+            dialogueTimer -= Time.deltaTime;
+        }
+
+        if (dialogueTimer <= 0)
+        {
+                actualDialogue++;
+                dialogueTimer = 10f;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+        {
+            actualDialogue++;
+            dialogueTimer = 10f;
+        }
+
+        switch (actualDialogue)
+        {
+
+            case 1:
+                dialogue1.SetActive(true);
+                dialogue2.SetActive(false);
+                dialogue3.SetActive(false);
+                dialogue4.SetActive(false);
+                dialogue5.SetActive(false);
+                dialogue6.SetActive(false);
+                dialogue7.SetActive(false);
+                dialogue8.SetActive(false);
+                break;
+
+            case 2:
+                dialogue1.SetActive(false);
+                dialogue2.SetActive(true);
+                dialogue3.SetActive(false);
+                dialogue4.SetActive(false);
+                dialogue5.SetActive(false);
+                dialogue6.SetActive(false);
+                dialogue7.SetActive(false);
+                dialogue8.SetActive(false);
+                break;
+
+            case 3:
+                dialogue1.SetActive(false);
+                dialogue2.SetActive(false);
+                dialogue3.SetActive(true);
+                dialogue4.SetActive(false);
+                dialogue5.SetActive(false);
+                dialogue6.SetActive(false);
+                dialogue7.SetActive(false);
+                dialogue8.SetActive(false);
+                break;
+
+            case 4:
+                dialogue1.SetActive(false);
+                dialogue2.SetActive(false);
+                dialogue3.SetActive(false);
+                dialogue4.SetActive(true);
+                dialogue5.SetActive(false);
+                dialogue6.SetActive(false);
+                dialogue7.SetActive(false);
+                dialogue8.SetActive(false);
+                break;
+
+            case 5:
+                dialogue1.SetActive(false);
+                dialogue2.SetActive(false);
+                dialogue3.SetActive(false);
+                dialogue4.SetActive(false);
+                dialogue5.SetActive(true);
+                dialogue6.SetActive(false);
+                dialogue7.SetActive(false);
+                dialogue8.SetActive(false);
+                break;
+
+            case 6:
+                dialogue1.SetActive(false);
+                dialogue2.SetActive(false);
+                dialogue3.SetActive(false);
+                dialogue4.SetActive(false);
+                dialogue5.SetActive(false);
+                dialogue6.SetActive(true);
+                dialogue7.SetActive(false);
+                dialogue8.SetActive(false);
+                break;
+
+            case 7:
+                dialogue1.SetActive(false);
+                dialogue2.SetActive(false);
+                dialogue3.SetActive(false);
+                dialogue4.SetActive(false);
+                dialogue5.SetActive(false);
+                dialogue6.SetActive(false);
+                dialogue7.SetActive(true);
+                dialogue8.SetActive(false);
+                break;
+
+            case 8:
+                dialogue1.SetActive(false);
+                dialogue2.SetActive(false);
+                dialogue3.SetActive(false);
+                dialogue4.SetActive(false);
+                dialogue5.SetActive(false);
+                dialogue6.SetActive(false);
+                dialogue7.SetActive(false);
+                dialogue8.SetActive(true);
+                break;
+            default:
+                dialogue1.SetActive(false);
+                dialogue2.SetActive(false);
+                dialogue3.SetActive(false);
+                dialogue4.SetActive(false);
+                dialogue5.SetActive(false);
+                dialogue6.SetActive(false);
+                dialogue7.SetActive(false);
+                dialogue8.SetActive(false);
+                finishedDialogue = true;
+                break;
+        }
+
+        if (actualMusic == 1)
+        {
+            music1.enabled = true;
+            music2.enabled = false;
+        }
+        else if (actualMusic == 2)
+        {
+            music2.enabled = true;
+            music1.enabled = false;
+        }
+
         #region Stats Bars
 
         #region Health
         if (healthAmount <= 0)
         {
-            //actualScene = SceneManager.GetActiveScene().buildIndex;
-            //SceneManager.LoadScene(actualScene);
+            actualScene = SceneManager.GetActiveScene().buildIndex;
+            SceneManager.LoadScene(actualScene);
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha1))
@@ -124,7 +313,8 @@ public class GameManager : MonoBehaviour
         if (reading)
         {
             Time.timeScale = 0f;
-            if (Input.GetKeyDown(KeyCode.Escape))
+            Debug.Log("Stoped");
+            if (Input.GetKeyDown(KeyCode.Escape) && reading)
             {
                 StopReading();
             }
@@ -255,6 +445,7 @@ public class GameManager : MonoBehaviour
         page8.SetActive(false);
         page9.SetActive(false);
         Time.timeScale = 1f;
+        pageSFX.Play();
         reading = false;
     }
 

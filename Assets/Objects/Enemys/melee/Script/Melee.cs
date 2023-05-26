@@ -18,6 +18,7 @@ public class Melee : MonoBehaviour
 
     #region Attack
     private Collider attackCheck;
+    public AudioSource attackSFX;
     #endregion
 
     public Animator animations;
@@ -66,7 +67,13 @@ public class Melee : MonoBehaviour
             }
             else if (attackCountdown <= 0)
             {
+                attackSFX.enabled = false;
                 alreadyAttacked = false;
+            }
+            
+            if (alreadyAttacked)
+            {
+                attackSFX.enabled = true;
             }
 
             if (!playerInAttackRange && !playerInSightRange)

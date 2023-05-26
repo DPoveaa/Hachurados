@@ -11,6 +11,8 @@ TagManager:
   - Box
   - Enemy
   - Hole
+  - End
+  - Limit
   layers:
   - Default
   - TransparentFX
@@ -25,8 +27,8 @@ TagManager:
   - Trap
   - Box
   - Hole
-  - 
-  - 
+  - End
+  - Limit
   - 
   - 
   - 
